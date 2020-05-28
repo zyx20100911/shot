@@ -9,6 +9,7 @@ export function request(config) {
 
     //axios拦截器,请求拦截器
     instance.interceptors.request.use(config => {
+        config.headers.Authorization = window.sessionStorage.getItem('token');
         return config
     }, error => {
         console.log(error);

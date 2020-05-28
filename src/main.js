@@ -4,10 +4,11 @@ import router from './router'
 import store from './store'
 import './plugins/element.js'
 import './assets/css/base.css'
-import axios from 'axios'
 
+/*
 Vue.prototype.$http = axios
 axios.defaults.baseURL = "http://timemeetyou.com:8889/api/private/v1/"
+*/
 
 Vue.config.productionTip = false
 
