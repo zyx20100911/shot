@@ -28,3 +28,28 @@ export function addUser(addUser) {
             }
         })
 }
+
+export function getUserById(url) {
+        return request({
+            url
+        })
+}
+
+
+export function changeUser(url,email,mobile) {
+    return request({
+        url,
+        data:{
+            email,
+            mobile
+        },
+        method:'put'
+    })
+}
+
+export function delUserById(url) {
+    return request({
+        url,
+        method:'delete'
+    })
+}
