@@ -1,11 +1,10 @@
 <template>
     <div>
-        <!--面包屑导航-->
-        <el-breadcrumb separator="/">
-            <el-breadcrumb-item :to="{ path: '/home' }">首页</el-breadcrumb-item>
-            <el-breadcrumb-item>用户管理</el-breadcrumb-item>
-            <el-breadcrumb-item>用户列表</el-breadcrumb-item>
-        </el-breadcrumb>
+        <!--面包屑组件-->
+        <breadcrumb>
+            <span slot="itemOne">用户管理</span>
+            <span slot="itemTwo">用户列表</span>
+        </breadcrumb>
 
         <!--卡片视图-->
         <el-card class="box-card">
@@ -99,6 +98,7 @@
             <el-form ref="addformRef"
                      :model="addform"
                      label-width="100px"
+
                     >
                 <el-form-item label="用户名" prop="username">
                     <el-input v-model="addform.username" style="width:80%"></el-input>
@@ -106,8 +106,8 @@
                 <el-form-item label="密码" prop="password">
                     <el-input v-model="addform.password" style="width:80%"></el-input>
                 </el-form-item>
-                <el-form-item label="手机号" prop="phone">
-                    <el-input v-model="addform.phone" style="width:80%"></el-input>
+                <el-form-item label="手机号" prop="mobile">
+                    <el-input v-model="addform.mobile" style="width:80%"></el-input>
                 </el-form-item>
                 <el-form-item label="邮箱" prop="email">
                     <el-input v-model="addform.email" style="width:80%"></el-input>
@@ -130,6 +130,7 @@
             <el-form ref="editformRef"
                      :model="editform"
                      label-width="100px"
+                     :rules="editformRules"
             >
                 <el-form-item label="用户名" prop="username">
                     <el-input disabled v-model="editform.username" style="width:80%"></el-input>
@@ -157,11 +158,46 @@
             changeUser,
             delUserById} from "../../API/home_user";
 
-
+    import breadcrumb from "../../components/common/breadcrumb";
 
     export default {
         name: "users",
+        components:{
+            breadcrumb
+        },
         data(){
+            //自定义规则验证表单-手机号验证
+            let checkMobile = (rule, value, callback) => {
+                if (!value) {
+                    return callback(new Error('手机号不能为空'));
+                }
+                //验证手机号
+                var myMobile = /^[1][3,4,5,7,8][0-9]{9}$/;
+                if (myMobile.test(value)){
+                   /* this.$refs.editformRef.validateField('mobile');*/
+                    callback();
+                }else {
+                    return callback(new Error('手机号格式错误'));
+                }
+
+
+            }
+            //自定义规则验证表单-邮箱验证
+            let checkEmail = (rule, value, callback) => {
+                if (!value) {
+                    return callback(new Error('邮箱不能为空'));
+                }
+                //验证手机号
+                var myEmail = /^([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+@([a-zA-Z0-9]+[_|\_|\.]?)*[a-zA-Z0-9]+\.[a-zA-Z]{2,3}$/;
+                if (myEmail.test(value)){
+                   /* this.$refs.editformRef.validateField('email');*/
+                    callback();
+                }else {
+                    return callback(new Error('邮箱格式错误'));
+                }
+
+
+            }
             return {
                 //获取用户列表请求参数对象
                 queryInfo:{
@@ -176,11 +212,20 @@
                 addform:{
                     username:'',
                     password:'',
-                    phone:'',
+                    mobile:'',
                     email:''
 
                 },
-                editform:{}
+                editform:{},
+                editformRules:{
+                    mobile:[
+                        { validator: checkMobile,trigger:'blur'}
+                    ],
+                    email:[
+                        { validator: checkEmail, trigger:'blur'}
+                    ]
+
+                },
             }
         },
         created() {
@@ -190,11 +235,7 @@
             getList(){
                 getHomeUsers(this.queryInfo).then(res => {
                     this.userList = res.data.users;
-                    this.total =  res.data.total
-
-
-
-                    console.log(res);
+                    this.total =  res.data.total;
                 })
             },
 
@@ -261,21 +302,29 @@
             editformClosed(){
                this.$refs.editformRef.resetFields();
             },
+
             //提交编辑信息
             changeUserInfo(){
-                let url = 'users/'+this.editform.id;
-                changeUser(url,this.editform.email,this.editform.mobile).then(res => {
-                    if(res.meta.status !== 200) return this.$message.error('编辑失败');
-                    //提示成功
-                    this.$message.success('编辑成功');
-                    //刷新列表
-                    this.getList();
-                    //隐藏弹框
-                   this.editdialogVisible = false;
+                this.$refs.editformRef.validate(valid=>{
+                    //如果预校验失败则直接return，不提交
+                    if(!valid) return;
+                    let url = 'users/'+this.editform.id;
+                    changeUser(url,this.editform.email,this.editform.mobile).then(res => {
+                        if(res.meta.status !== 200) return this.$message.error('编辑失败');
+                        //提示成功
+                        this.$message.success('编辑成功');
+                        //刷新列表
+                        this.getList();
+                        //隐藏弹框
+                        this.editdialogVisible = false;
 
-                }).catch(err => {
-                    console.log(err);
-                })
+                    }).catch(err => {
+                        console.log(err);
+                    })
+                });
+
+
+
 
             },
             //删除用户
@@ -288,8 +337,6 @@
                     let url = 'users/'+id
                     delUserById(url).then(res => {
                       if(res.meta.status!==200)return this.$message.error('删除用户失败');
-
-
 
                         //记录总页数,
                         //此时已经实现删除操作，所以total的值需要减1，Math.ceil是向上取整，保证始终大于等于1

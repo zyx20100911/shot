@@ -25,7 +25,7 @@
                             <span>{{item.authName}}</span>
                         </template>
 
-                        <el-menu-item :index="'/home/'+item.path" v-for="(menuItem,index) in item.children">
+                        <el-menu-item :index="'/home/'+menuItem.path" v-for="(menuItem,index) in item.children">
                             <i class="el-icon-menu"></i>
                             <span slot="title">{{menuItem.authName}}</span>
                         </el-menu-item>

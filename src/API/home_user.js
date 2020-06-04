@@ -24,7 +24,7 @@ export function addUser(addUser) {
                 username:addUser.username,
                 password:addUser.password,
                 email:addUser.email,
-                mobile:addUser.phone
+                mobile:addUser.mobile
             }
         })
 }
