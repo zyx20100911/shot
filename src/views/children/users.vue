@@ -182,29 +182,19 @@
             }
         },
         created() {
-           getHomeUsers(this.queryInfo).then(res => {
-                this.userList = res.data.users;
-                this.total =  res.data.total
 
-                console.log(res);
-            })
+            this.getList()
         },
         methods:{
-            //切换每页显示的个数
-            handleSizeChange(newsize){
-                this.queryInfo.pagesize= newsize;
-                getHomeUsers( this.queryInfo).then(res => {
+            getList(){
+                getHomeUsers(this.queryInfo).then(res => {
                     this.userList = res.data.users;
-                })
+                    this.total =  res.data.total
 
-            },
-            //点击数字和前后按钮切换每页数据
-            handleCurrentChange(newpage){
-                this.queryInfo.pagenum = newpage;
-                getHomeUsers( this.queryInfo).then(res => {
-                    this.userList = res.data.users;
+                    console.log(res);
                 })
             },
+
             //点击切换用户状态
             userStateChange(userinfo){
                 console.log(userinfo.type);
@@ -242,9 +232,7 @@
                     //隐藏弹出框
                     this.dialogVisible = false;
                     //刷新列表
-                      getHomeUsers(this.queryInfo).then(res => {
-                          this.userList = res.data.users;
-                      })
+                      this.getList();
 
                   }).catch(error => {
                       console.log(error);
@@ -277,12 +265,11 @@
                     if(res.meta.status !== 200) return this.$message.error('编辑失败');
                     //提示成功
                     this.$message.success('编辑成功');
+                    //刷新列表
+                    this.getList();
                     //隐藏弹框
                    this.editdialogVisible = false;
-                    //刷新列表
-                    getHomeUsers(this.queryInfo).then(res => {
-                        this.userList = res.data.users;
-                    })
+
                 }).catch(err => {
                     console.log(err);
                 })
@@ -299,9 +286,7 @@
                     delUserById(url).then(res => {
                       if(res.meta.status!==200)return this.$message.error('删除用户失败');
                         //刷新列表
-                        getHomeUsers(this.queryInfo).then(res => {
-                            this.userList = res.data.users;
-                        })
+                        this.getList();
                     }).catch(err => {
                         console.log(err);
                     });
@@ -316,7 +301,18 @@
                         message: '已取消删除'
                     });
                 });
-            }
+            },
+            //切换每页显示的个数
+            handleSizeChange(newsize){
+                this.queryInfo.pagesize= newsize;
+                this.getList();
+
+            },
+            //点击数字和前后按钮切换每页数据
+            handleCurrentChange(newpage){
+                this.queryInfo.pagenum = newpage;
+                this.getList();
+            },
 
         }
 
