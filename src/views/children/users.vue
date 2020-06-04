@@ -157,6 +157,8 @@
             changeUser,
             delUserById} from "../../API/home_user";
 
+
+
     export default {
         name: "users",
         data(){
@@ -165,7 +167,7 @@
                 queryInfo:{
                     query:'',
                     pagenum:1,
-                    pagesize:10
+                    pagesize:5
                 },
                 userList:[],
                 total:0,
@@ -182,14 +184,15 @@
             }
         },
         created() {
-
-            this.getList()
+           this.getList();
         },
         methods:{
             getList(){
                 getHomeUsers(this.queryInfo).then(res => {
                     this.userList = res.data.users;
                     this.total =  res.data.total
+
+
 
                     console.log(res);
                 })
@@ -285,7 +288,20 @@
                     let url = 'users/'+id
                     delUserById(url).then(res => {
                       if(res.meta.status!==200)return this.$message.error('删除用户失败');
-                        //刷新列表
+
+
+
+                        //记录总页数,
+                        //此时已经实现删除操作，所以total的值需要减1，Math.ceil是向上取整，保证始终大于等于1
+                        const totalPage = Math.ceil((this.total - 1) / this.queryInfo.pagesize)
+
+                        //记录当前页码
+                        //记住删除最后一条数据时当前码是最后一页
+                        const pagenum = this.queryInfo.pagenum > totalPage ? totalPage : this.queryInfo.pagenum
+
+                        //实现跳转
+                        this.queryInfo.pagenum = pagenum < 1 ? 1 : pagenum
+                        // 重新渲染（后面方法改为你的方法名）
                         this.getList();
                     }).catch(err => {
                         console.log(err);
