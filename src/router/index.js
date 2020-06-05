@@ -26,17 +26,17 @@ const routes = [
         children: [{
             path: 'users',
             component: users
-        },{
+        }, {
             path: 'rights',
             component: rights
-        },{
+        }, {
             path: 'roles',
             component: roles
         }
-        , {
-            path: 'welcome',
-            component: welcome
-        }]
+            , {
+                path: 'welcome',
+                component: welcome
+            }]
     }
 
 ]
