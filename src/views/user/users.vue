@@ -57,6 +57,7 @@
                 <el-table-column
                         label="操作">
                     <template v-slot:default="scope">
+                        <!--tip,悬浮显示的提示-->
                         <el-tooltip
                                 :enterable="false"
                                 class="item"
@@ -207,6 +208,7 @@
                 },
                 userList:[],
                 total:0,
+                //控制弹出框是否显示
                 dialogVisible:false,
                 editdialogVisible:false,
                 addform:{
@@ -285,7 +287,6 @@
             //点击编辑，根据ID查出用户信息，展示
             editUser(id){
 
-               /* console.log(id);*/
                 let url = 'users/'+id;
                 getUserById(url).then(res => {
                    /* console.log(res);*/
