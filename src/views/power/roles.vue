@@ -32,7 +32,7 @@
                             </el-col>
                             <el-col :span="19">
                                 <el-row v-for="(sonItem,i2) in item.children"
-                                        :class="['bdtop',i2 == 0 ? 'bdtop' : '']"
+                                        :class="[i2 === 0 ? '' : 'bdtop']"
                                 >
                                     <el-col :span="6">
                                         <el-tag type="warning" closable>
