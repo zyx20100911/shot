@@ -32,7 +32,7 @@
                         >
                             <!--tag显示-->
                             <el-col :span="5">
-                                <el-tag closable>
+                                <el-tag closable @close="closeRoles(props.row.id,item.id)">
                                     {{item.authName}}
                                 </el-tag>
                                 <!--箭头小图标-->
@@ -74,7 +74,7 @@
                     <template v-slot:default="scope">
                         <el-button @click="getRolesInfoById(scope.row.id)" size="mini" type="primary">编辑</el-button>
                         <el-button @click="delRoles(scope.row.id)" size="mini" type="danger">删除</el-button>
-                        <el-button size="mini" type="warning">权限操作</el-button>
+                        <el-button @click="showSetRightDialog(scope.row)" size="mini" type="warning">权限操作</el-button>
                     </template>
                 </el-table-column>
 
@@ -135,11 +135,36 @@
     <el-button @click="editRoles" type="primary">确 定</el-button>
   </span>
         </el-dialog>
+
+        <!--权限tree弹出框-->
+        <el-dialog
+                :visible.sync="setRightDialog"
+                title="编辑角色"
+                width="30%"
+                @close="closeRightDialog"
+        >
+            <!--权限tree绑定数据渲染-->
+            <el-tree
+                    :data="rightsList"
+                    show-checkbox
+                    default-expand-all
+                    node-key="id"
+                    ref="tree"
+                    highlight-current
+                    :default-checked-keys="defaultKey"
+                    :props="rightsProps">
+            </el-tree>
+
+            <el-button @click="setRightDialog = false">取 消</el-button>
+            <el-button @click="changeRightDialog" type="primary">确 定</el-button>
+
+
+        </el-dialog>
     </div>
 </template>
 
 <script>
-    import {addRoles, changeRoles, delRoles, getRoles, getRolesById} from "../../API/power";
+    import {addRoles, changeRoles, delRoles, getRoles, getRolesById,delRolesRights,getRights} from "../../API/power";
 
     import breadcrumb from "../../components/common/breadcrumb";
 
@@ -150,14 +175,21 @@
         },
         data() {
             return {
-                rolesList: [],
+                rolesList: [],//角色列表
+                rightsList: [],//权限列表
                 dialogVisible: false,
                 editdialogVisible: false,
+                setRightDialog: false,
                 addform: {
                     roleName: '',
                     roleDesc: ''
                 },
                 editform: {},
+                rightsProps: {//权限tree绑定二级三级所用
+                    children: 'children',
+                    label: 'authName'
+                },
+                defaultKey:[], //权限tree默认选中项的数组
                 formRules: {
                     roleName: [
                         {required: true, message: '请输入活动名称', trigger: 'blur'},
@@ -175,7 +207,7 @@
             getRolesList() {
                 getRoles().then(res => {
                     if (res.meta.status !== 200) return this.$message.error('获取权限列表失败');
-                    console.log(res);
+                   /* console.log(res);*/
                     this.rolesList = res.data
                 }).catch(err => {
                     console.log(err);
@@ -189,7 +221,7 @@
             editformClosed() {
                 this.$refs.editformRef.resetFields();
             },
-            //添加权限
+            //添加角色
             addRole() {
                 //进行预校验
                 this.$refs.addformRef.validate(valid => {
@@ -208,7 +240,7 @@
                     })
                 })
             },
-            //删除权限
+            //删除角色
             delRoles(id) {
                 let url = 'roles/' + id;
                 this.$confirm('此操作将删除该用户, 是否继续?', '提示', {
@@ -241,6 +273,7 @@
                 getRolesById(url).then(res => {
                     if (res.meta.status !== 200) return this.$message.error('获取角色信息失败');
                     this.editform = res.data;
+                    console.log(res);
                     this.editdialogVisible = true;
                 })
 
@@ -260,6 +293,76 @@
                         console.log(err);
                     })
                 })
+
+            },
+            //删除角色权限，tag删除
+            closeRoles(roleId,rightId){
+                let url ='roles/:'+roleId+'/rights/:'+rightId;
+
+                this.$confirm('此操作将删除该用户, 是否继续?', '提示', {
+                    confirmButtonText: '确定',
+                    cancelButtonText: '取消',
+                    type: 'warning'
+                }).then(() => {
+                    delRolesRights(url).then(res => {
+                        if (res.meta.status !== 200) return this.$message.error('取消权限失败');
+                        this.getRolesList();
+
+                    }).catch(err => {
+                        console.log(err);
+                    });
+                    this.$message({
+                        type:"success",
+                        message:'取消权限成功'
+                    })
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: '已取消删除'
+                    });
+                })
+
+
+            },
+            //递归函数
+            getLeafKeys(node,arr){
+                if(!node.children){
+                    return  arr.push(node.id);
+                }
+                node.children.forEach(item => this.getLeafKeys(item,arr))
+            },
+            //控制权限操作按钮
+            showSetRightDialog(defaultKeys){
+                let url = 'rights/tree';
+
+                getRights(url).then(res => {
+                    if(res.meta.status !== 200) return this.$message.error('获取用户权限失败');
+                   this.rightsList = res.data;
+                }).catch(err => {
+                    console.log(err);
+                });
+
+                //使用for循环，缺点是固定数据结构，如果数据结构变化，就会出现问题
+             /*
+                for (let k of defaultKeys) {
+                    for (let i of k.children) {
+                        for (let r of i.children) {
+                           this.defaultKey.push(r.id);
+
+                        }
+                    }
+                }*/
+                //使用递归函数，就不会出现这样的问题，但是递归写的比较绕
+                this.getLeafKeys(defaultKeys,this.defaultKey);
+                this.setRightDialog =true;
+
+            },
+            //关闭权限弹窗重置tree
+            closeRightDialog(){
+                this.defaultKey = [];//每次打开都清空上一次默认选中项;
+            },
+            //提交编辑后的权限
+            changeRightDialog(){
 
             }
 

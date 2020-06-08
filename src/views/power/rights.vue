@@ -47,7 +47,8 @@
         },
         methods:{
             getRightsList(){
-                getRights().then(res => {
+                let url =  'rights/list';
+                getRights(url).then(res => {
                     this.rightsList = res.data
                 })
             }

@@ -1,8 +1,8 @@
 import {request} from "./request";
 
-export function getRights() {
+export function getRights(url) {
     return request({
-        url: 'rights/list'
+        url
     })
 }
 
@@ -41,5 +41,11 @@ export function changeRoles(url, roleName, roleDesc) {
             roleName,
             roleDesc
         }
+    })
+}
+export function delRolesRights(url) {
+    return request({
+        url,
+        method: 'delete'
     })
 }
