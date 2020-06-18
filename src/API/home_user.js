@@ -53,3 +53,12 @@ export function delUserById(url) {
         method: 'delete'
     })
 }
+export function setUserRoles(url,rid) {
+    return request({
+        url,
+        method:'put',
+        data:{
+            rid
+        }
+    })
+}

@@ -24,7 +24,7 @@
             <el-table
                     :data="userList"
                     border
-                    style="width: 75%">
+                    style="width: 100%">
                 <el-table-column type="index" label="#"></el-table-column>
                 <el-table-column
                         prop="mobile"
@@ -72,6 +72,13 @@
                         </el-tooltip>
                         <el-tooltip :enterable="false" class="item" effect="dark" content="删除" placement="top">
                         <el-button type="danger" icon="el-icon-delete" @click="delUser(scope.row.id)"  size="mini"></el-button>
+                        </el-tooltip>
+
+                        <el-tooltip :enterable="false" class="item" effect="dark" content="分配角色" placement="top">
+                            <el-button type="warning"
+                                       icon="el-icon-user"
+                                       size="mini"
+                                       @click="showUserRoles(scope.row)"></el-button>
                         </el-tooltip>
                     </template>
                 </el-table-column>
@@ -148,6 +155,32 @@
     <el-button type="primary" @click="changeUserInfo">确 定</el-button>
   </span>
         </el-dialog>
+
+        <!--分配权限弹出框-->
+        <el-dialog
+                title="分配角色"
+                :visible.sync="RolesDialogVisible"
+                width="30%"
+                ref="rolesRef"
+        >
+            <p>当前用户：{{userInfo.username}}</p>
+            <p>当前角色：{{userInfo.role_name}}</p>
+            <p>选择角色：
+            <el-select v-model="SelectDefaultValue" placeholder="请选择">
+                <el-option
+                        v-for="item in rolesList"
+                        :key="item.id"
+                        :label="item.roleName"
+                        :value="item.id">
+                </el-option>
+            </el-select>
+            </p>
+
+            <span slot="footer" class="dialog-footer">
+    <el-button @click="RolesDialogVisible = false">取 消</el-button>
+    <el-button type="primary" @click="changeUserRoles">确 定</el-button>
+  </span>
+        </el-dialog>
     </div>
 </template>
 
@@ -157,7 +190,8 @@
             addUser,
             getUserById,
             changeUser,
-            delUserById} from "../../API/home_user";
+            delUserById,setUserRoles} from "../../API/home_user";
+    import {getRoles} from "../../API/power";
 
     import breadcrumb from "../../components/common/breadcrumb";
 
@@ -206,11 +240,13 @@
                     pagenum:1,
                     pagesize:5
                 },
+                userInfo:{},//接收用户权限
                 userList:[],
                 total:0,
                 //控制弹出框是否显示
                 dialogVisible:false,
                 editdialogVisible:false,
+                RolesDialogVisible:false,//分配权限弹出框控制是否显示
                 addform:{
                     username:'',
                     password:'',
@@ -228,6 +264,9 @@
                     ]
 
                 },
+                SelectDefaultValue:'',
+                rolesList:[]
+
             }
         },
         created() {
@@ -243,10 +282,8 @@
 
             //点击切换用户状态
             userStateChange(userinfo){
-                console.log(userinfo.type);
                 var url = 'users/'+userinfo.id+'/state/'+userinfo.mg_state;
                 ChangeUserState(url).then(res => {
-                    console.log(res);
                     if(res.meta.status!==200)return userinfo.mg_state = !userinfo.mg_state;
                     this.$message.success('设置成功');
                 }).catch(error => {
@@ -286,14 +323,11 @@
             },
             //点击编辑，根据ID查出用户信息，展示
             editUser(id){
-
                 let url = 'users/'+id;
                 getUserById(url).then(res => {
                    /* console.log(res);*/
                     if(res.meta.status !== 200) return this.$message.error('查询错误');
-                    console.log(res);
                     this.editform = res.data
-
                     this.editdialogVisible = true;
                 }).catch(error => {
                     console.log(error);
@@ -376,6 +410,32 @@
             handleCurrentChange(newpage){
                 this.queryInfo.pagenum = newpage;
                 this.getList();
+            },
+            //显示分配权限弹出框
+            showUserRoles(userInfo){
+                this.RolesDialogVisible = true;
+                this.userInfo = userInfo;
+                getRoles().then(res => {
+                    if (res.meta.status !== 200) return this.$message.error('获取角色列表失败')
+                   this.rolesList = res.data;
+                })
+
+
+            },
+            //提交编辑后的用户角色
+            changeUserRoles(){
+                if(!this.SelectDefaultValue){
+                    return this.$message.error('请选择角色');
+                }
+ /*               console.log(this.userInfo.id);
+                console.log(this.SelectDefaultValue);
+*/
+
+                let url = 'users/'+this.userInfo.id+'/role';
+                setUserRoles(url,this.SelectDefaultValue).then(res => {
+                    console.log(res);
+                })
+
             },
 
         }

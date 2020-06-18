@@ -64,7 +64,6 @@
             getHomeAsideList().then(res => {
                 if (res.meta.status !== 200) return this.$message.error(res.meta.msg)
                 this.list = res.data;
-                console.log(this.list);
                 /* this.$message.success("请求成功")*/
 
             }).catch(error => {

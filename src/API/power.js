@@ -49,3 +49,14 @@ export function delRolesRights(url) {
         method: 'delete'
     })
 }
+
+export function setRolesRights(url,rids) {
+    return request({
+        url,
+        method:'post',
+        data:{
+            rids
+        }
+    })
+
+}

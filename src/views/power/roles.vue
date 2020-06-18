@@ -32,7 +32,7 @@
                         >
                             <!--tag显示-->
                             <el-col :span="5">
-                                <el-tag closable @close="closeRoles(props.row.id,item.id)">
+                                <el-tag closable @close="closeRoles(props.row,item.id)">
                                     {{item.authName}}
                                 </el-tag>
                                 <!--箭头小图标-->
@@ -46,14 +46,19 @@
                                         v-for="(sonItem,i2) in item.children"
                                 >
                                     <el-col :span="6">
-                                        <el-tag closable type="success">
+                                        <el-tag closable
+                                                @close="closeRoles(props.row,sonItem.id)"
+                                                type="success">
                                             {{sonItem.authName}}
                                         </el-tag>
                                         <i class="el-icon-caret-right"></i>
                                     </el-col>
                                     <!--三级权限渲染-->
                                     <el-col :span="13">
-                                        <el-tag closable type="warning" v-for="sitem in sonItem.children">
+                                        <el-tag closable
+                                                @close="closeRoles(props.row,sitem.id)"
+                                                type="warning"
+                                                v-for="sitem in sonItem.children">
                                             {{sitem.authName}}
                                         </el-tag>
                                     </el-col>
@@ -164,7 +169,7 @@
 </template>
 
 <script>
-    import {addRoles, changeRoles, delRoles, getRoles, getRolesById,delRolesRights,getRights} from "../../API/power";
+    import {addRoles, changeRoles, delRoles, getRoles, getRolesById,delRolesRights,getRights, setRolesRights} from "../../API/power";
 
     import breadcrumb from "../../components/common/breadcrumb";
 
@@ -190,6 +195,7 @@
                     label: 'authName'
                 },
                 defaultKey:[], //权限tree默认选中项的数组
+                roleId:'',//点击权限操作按钮后，保存当前角色ID用于提交编辑表单
                 formRules: {
                     roleName: [
                         {required: true, message: '请输入活动名称', trigger: 'blur'},
@@ -296,8 +302,9 @@
 
             },
             //删除角色权限，tag删除
-            closeRoles(roleId,rightId){
-                let url ='roles/:'+roleId+'/rights/:'+rightId;
+            closeRoles(role,rightId){
+                const roleId = role.id;
+                let url ='roles/'+roleId+'/rights/'+rightId;
 
                 this.$confirm('此操作将删除该用户, 是否继续?', '提示', {
                     confirmButtonText: '确定',
@@ -305,16 +312,16 @@
                     type: 'warning'
                 }).then(() => {
                     delRolesRights(url).then(res => {
+                        console.log(res);
                         if (res.meta.status !== 200) return this.$message.error('取消权限失败');
-                        this.getRolesList();
+                        this.$message.success('取消权限成功');
+                        //this.getRolesList();
+                        //因为接口返回的是最新的数据，直接用props.row.children来接收返回的data就行，这样就不会每次刷新将展开行收起来了
+                        role.children = res.data;
 
                     }).catch(err => {
                         console.log(err);
                     });
-                    this.$message({
-                        type:"success",
-                        message:'取消权限成功'
-                    })
                 }).catch(() => {
                     this.$message({
                         type: 'info',
@@ -334,10 +341,11 @@
             //控制权限操作按钮
             showSetRightDialog(defaultKeys){
                 let url = 'rights/tree';
-
+                this.roleId = defaultKeys.id
                 getRights(url).then(res => {
                     if(res.meta.status !== 200) return this.$message.error('获取用户权限失败');
                    this.rightsList = res.data;
+
                 }).catch(err => {
                     console.log(err);
                 });
@@ -363,6 +371,23 @@
             },
             //提交编辑后的权限
             changeRightDialog(){
+                const treeRight = [
+                    ...this.$refs.tree.getCheckedKeys(),
+                    ...this.$refs.tree.getHalfCheckedKeys()
+                ]
+                //用Join方法转换成字符串传入api接口
+                const rids = treeRight.join(',');
+                let url = "roles/"+this.roleId+"/rights";
+                setRolesRights(url,rids).then(res => {
+                    if(res.meta.status!== 200) return this.$message.error('权限分配失败');
+                    this.$message.success('权限分配成功');
+                    this.getRolesList();
+                    this.setRightDialog = false;
+
+                }).catch(err => {
+                    console.log(err);
+                })
+
 
             }
 
