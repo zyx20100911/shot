@@ -345,7 +345,7 @@
                 getRights(url).then(res => {
                     if(res.meta.status !== 200) return this.$message.error('获取用户权限失败');
                    this.rightsList = res.data;
-
+                  console.log(res.data)
                 }).catch(err => {
                     console.log(err);
                 });
